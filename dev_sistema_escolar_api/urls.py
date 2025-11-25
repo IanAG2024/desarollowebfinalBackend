@@ -22,8 +22,11 @@ urlpatterns = [
         path('maestros/', maestros.MaestrosView.as_view()),
     #Maestro Data
         path('lista-maestros/', maestros.MaestrosAll.as_view()),
+
+        path('lista-alumnos/', alumnos.AlumnosAll.as_view()),
     #Total Users
         path('total-usuarios/', users.TotalUsers.as_view()),
+
     #Login
         path('login/', auth.CustomAuthToken.as_view()),
     #Logout

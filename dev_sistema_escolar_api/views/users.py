@@ -110,7 +110,9 @@ class AdminView(generics.CreateAPIView):
     # Eliminar administrador con delete (Borrar realmente)
     # TODO: Agregar eliminación de administradores
 
+class TotalUsers(generics.CreateAPIView):
 #Contar el total de cada tipo de usuarios
+
     def get(self, request, *args, **kwargs):
         # TOTAL ADMINISTRADORES
         admin_qs = Administradores.objects.filter(user__is_active=True)
