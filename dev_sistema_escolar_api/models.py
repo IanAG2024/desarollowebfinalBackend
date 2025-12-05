@@ -60,3 +60,37 @@ class Maestros(models.Model):
 
     def __str__(self):
         return "Perfil del maestro "+self.first_name+" "+self.last_name
+
+from django.db import models
+from django.contrib.auth.models import User
+
+
+class Evento(models.Model):
+    id = models.BigAutoField(primary_key=True)
+
+    # Nombre del evento
+    nombre_evento = models.CharField(max_length=255, null=False, blank=False)
+    # Tipo de evento
+    tipo_evento = models.CharField(max_length=100, null=False, blank=False)
+    # Fecha de realización
+    fecha_realizacion = models.DateField(null=False, blank=False)
+    # Horario
+    hora_inicio = models.TimeField(null=False, blank=False)
+    hora_fin = models.TimeField(null=False, blank=False)
+    # Lugar
+    lugar = models.CharField(max_length=255, null=False, blank=False)
+    # Público objetivo
+    publico_objetivo = models.TextField(null=True, blank=True)
+    # Programa educativo (solo si "Estudiantes" está en público_objetivo)
+    programa_educativo = models.CharField(max_length=255, null=True, blank=True)
+    # Responsable del evento
+    responsable = models.ForeignKey(User, on_delete=models.CASCADE, related_name='eventos_responsable')
+    # Descripción breve
+    descripcion = models.TextField(null=True, blank=True)
+    # Cupo máximo
+    cupo_maximo = models.IntegerField(null=False, blank=False)
+    creation = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    update = models.DateTimeField(auto_now=True, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.nombre_evento} - {self.responsable.username}"

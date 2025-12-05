@@ -8,6 +8,7 @@ from rest_framework import generics
 from rest_framework import status
 from rest_framework.response import Response
 from django.contrib.auth.models import Group
+from django.shortcuts import get_object_or_404
 
 
 class AlumnosAll(generics.CreateAPIView):
@@ -28,6 +29,13 @@ class AlumnosView(generics.CreateAPIView):
     
     #Obtener alumno por ID
     # TODO: Agregar obtención de alumno por ID
+
+    permission_classes = (permissions.IsAuthenticated,)
+    def get(self, request, *args, **kwargs):
+        alumno = get_object_or_404(Alumnos, id=request.GET.get("id"))
+        alumno = AlumnoSerializer(alumno, many=False).data
+        # Si todo es correcto, regresamos la información
+        return Response(alumno, 200)
     
     #Registrar nuevo usuario
     @transaction.atomic
@@ -79,6 +87,50 @@ class AlumnosView(generics.CreateAPIView):
     
     # Actualizar datos del alumno
     # TODO: Agregar actualización de alumnos
+    @transaction.atomic
+    def put(self, request, *args, **kwargs):
+
+        # 1. Obtener alumno
+        alumno = get_object_or_404(Alumnos, id=request.data["id"])
+
+        # 2. Actualizar datos del usuario asociado
+        user = alumno.user
+        first_name = request.data.get("first_name")
+        last_name = request.data.get("last_name")
+
+        if first_name:
+            user.first_name = first_name
+        if last_name:
+            user.last_name = last_name
+
+        user.save()
+
+        # 3. Actualizar campos del alumno
+        alumno.matricula = request.data.get("matricula")
+        alumno.curp = request.data.get("curp")
+        alumno.rfc = request.data.get("rfc", "").upper()
+        alumno.fecha_nacimiento = request.data.get("fecha_nacimiento")
+        alumno.edad = request.data.get("edad")
+        alumno.telefono = request.data.get("telefono")
+        alumno.ocupacion = request.data.get("ocupacion")
+
+        alumno.save()
+
+        # 4. Respuesta final
+        return Response(
+            {"message": "Alumno actualizado correctamente", "alumno_updated_id": alumno.id},
+            status=200
+        )
+
     
     # Eliminar alumno con delete (Borrar realmente)
     # TODO: Agregar eliminación de alumnos
+    @transaction.atomic
+    def delete(self, request, *args, **kwargs):
+        alumno = get_object_or_404(Alumnos, id=request.GET.get("id"))
+
+        try:
+            alumno.user.delete()
+            return Response({"details": "Maestro eliminado"}, 200)
+        except Exception as e:
+            return Response({"details": "Algo pasó al eliminar"}, 400)

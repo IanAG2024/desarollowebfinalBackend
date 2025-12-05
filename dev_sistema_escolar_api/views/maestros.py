@@ -27,16 +27,24 @@ class MaestrosAll(generics.CreateAPIView):
         return Response(lista, 200)
     
 class MaestrosView(generics.CreateAPIView):
+    serializer_class = UserSerializer
     # Permisos por método (sobrescribe el comportamiento default)
     # Verifica que el usuario esté autenticado para las peticiones GET, PUT y DELETE
     def get_permissions(self):
         if self.request.method in ['GET', 'PUT', 'DELETE']:
             return [permissions.IsAuthenticated()]
         return []  # POST no requiere autenticación
-    
+
     #Obtener maestro por ID
     # TODO: Agregar obtención de maestro por ID
-    
+    # Obtener usuario por ID
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request, *args, **kwargs):
+        maestro = get_object_or_404(Maestros, id=request.GET.get("id"))
+        maestro = MaestroSerializer(maestro, many=False).data
+        # Si todo es correcto, regresamos la información
+        return Response(maestro, 200)
     #Registrar nuevo usuario maestro
     @transaction.atomic
     def post(self, request, *args, **kwargs):
@@ -58,7 +66,7 @@ class MaestrosView(generics.CreateAPIView):
             user.save()
             user.set_password(password)
             user.save()
-            
+
             group, created = Group.objects.get_or_create(name=role)
             group.user_set.add(user)
             user.save()
@@ -74,20 +82,64 @@ class MaestrosView(generics.CreateAPIView):
             maestro.save()
             return Response({"maestro_created_id": maestro.id }, 201)
         return Response(user.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
     # Actualizar datos del maestro
     # TODO: Agregar actualización de maestros
-    
+
     # Eliminar maestro con delete (Borrar realmente)
     @transaction.atomic
     def delete(self, request, *args, **kwargs):
         maestro = get_object_or_404(Maestros, id=request.GET.get("id"))
+
         try:
             maestro.user.delete()
             return Response({"details":"Maestro eliminado"},200)
         except Exception as e:
             return Response({"details":"Algo pasó al eliminar"},400)
-    
+
+    @transaction.atomic
+    def put(self, request, *args, **kwargs):
+
+        # 1. Obtener maestro
+        maestro = get_object_or_404(Maestros, id=request.data["id"])
+
+        # 2. Actualizar datos del usuario asociado
+        user = maestro.user
+        first_name = request.data.get("first_name")
+        last_name = request.data.get("last_name")
+
+
+        if first_name:
+            user.first_name = first_name
+        if last_name:
+            user.last_name = last_name
+
+        user.save()
+
+        # 3. Actualizar datos del maestro
+        maestro.id_trabajador = request.data.get("id_trabajador")
+        maestro.fecha_nacimiento = request.data.get("fecha_nacimiento")
+        maestro.telefono = request.data.get("telefono")
+        maestro.rfc = request.data.get("rfc", "").upper()
+        maestro.cubiculo = request.data.get("cubiculo")
+        maestro.area_investigacion = request.data.get("area_investigacion")
+
+
+        materias = request.data.get("materias_json")
+
+        # Si viene como array guardarlo como string JSON
+        if isinstance(materias, list):
+            maestro.materias_json = json.dumps(materias)
+        else:
+
+            maestro.materias_json = materias
+
+        maestro.save()
+
+        return Response(
+            {"message": "Maestro actualizado correctamente", "maestro_updated_id": maestro.id},
+            status=200
+        )
     #Eliminar maestro (Desactivar usuario)
     # @transaction.atomic
     # def delete(self, request, *args, **kwargs):
@@ -101,4 +153,4 @@ class MaestrosView(generics.CreateAPIView):
     #             return Response({"message":"Maestro con ID "+str(id_maestro)+" eliminado correctamente."},200)
     #         except Maestros.DoesNotExist:
     #             return Response({"message":"Maestro con ID "+str(id_maestro)+" no encontrado."},404)
-    #     return Response({"message":"Se necesita el ID del maestro."},400)   
+    #     return Response({"message":"Se necesita el ID del maestro."},400)
