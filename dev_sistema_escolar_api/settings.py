@@ -77,12 +77,17 @@ WSGI_APPLICATION = 'dev_sistema_escolar_api.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'IanARC$dev_sistema_escolar_db',
+        'USER': 'IanARC',
+        'PASSWORD': 'godofgar333',
+        'HOST': 'IanARC.mysql.pythonanywhere-services.com',
+        'PORT': '3306',
         'OPTIONS': {
-            'read_default_file': os.path.join(BASE_DIR, "my.cnf"),
-            'charset': 'utf8mb4',
-        }
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
     }
 }
+
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
